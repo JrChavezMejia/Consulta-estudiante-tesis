@@ -100,15 +100,18 @@
   <div class="contenedor">
     <h1>Consulta de estado de tesis</h1>
     <p>
-      Ingrese su ID de registro o su correo electrónico para consultar el estado de su trabajo académico.
+      Ingrese su ID, correo electrónico y clave de acceso para consultar el estado de su trabajo académico.
     </p>
 
     <div class="caja">
       <label for="id">ID de registro</label>
-      <input id="id" type="text" placeholder="Ejemplo: TESIS-20260707123000" />
+      <input id="id" type="text" placeholder="Ejemplo: TESIS-20260706091128" />
 
       <label for="correo">Correo electrónico</label>
       <input id="correo" type="email" placeholder="correo@ejemplo.com" />
+
+      <label for="clave">Clave de acceso</label>
+      <input id="clave" type="password" placeholder="Clave recibida por correo" />
 
       <button onclick="consultarEstado()">Consultar estado</button>
 
@@ -122,15 +125,16 @@
     async function consultarEstado() {
       const id = document.getElementById("id").value.trim();
       const correo = document.getElementById("correo").value.trim();
+      const clave = document.getElementById("clave").value.trim();
       const resultado = document.getElementById("resultado");
 
       resultado.style.display = "block";
       resultado.className = "resultado";
       resultado.innerHTML = "Consultando...";
 
-      if (!id && !correo) {
+      if (!id || !correo || !clave) {
         resultado.className = "resultado error";
-        resultado.innerHTML = "Debe ingresar el ID o el correo electrónico.";
+        resultado.innerHTML = "Debe ingresar ID, correo electrónico y clave de acceso.";
         return;
       }
 
@@ -138,7 +142,8 @@
         SCRIPT_URL +
         "?action=consultar" +
         "&id=" + encodeURIComponent(id) +
-        "&correo=" + encodeURIComponent(correo);
+        "&correo=" + encodeURIComponent(correo) +
+        "&clave=" + encodeURIComponent(clave);
 
       try {
         const respuesta = await fetch(url);
