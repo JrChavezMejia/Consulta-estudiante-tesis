@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Consulta y Administración de Tesis</title>
+  <title>Consulta de Estado de Tesis</title>
 
   <style>
     body {
@@ -14,14 +14,21 @@
     }
 
     .contenedor {
-      max-width: 820px;
+      max-width: 780px;
       margin: 0 auto;
       padding: 32px 18px;
     }
 
     h1, h2 {
-      margin-bottom: 8px;
       color: #19d3e6;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      margin-top: 0;
     }
 
     p {
@@ -68,9 +75,9 @@
       cursor: pointer;
     }
 
-    .boton-admin {
+    .admin button {
       background: #ffd166;
-      color: #1d1600;
+      color: #1b1300;
     }
 
     .resultado {
@@ -88,8 +95,8 @@
     }
 
     .exito {
-      border-color: #2dd881;
-      color: #d9ffe9;
+      border-color: #3ddc97;
+      color: #d8ffe9;
     }
 
     .dato {
@@ -103,6 +110,12 @@
     a {
       color: #19d3e6;
     }
+
+    .separador {
+      height: 1px;
+      background: #2f5c7c;
+      margin: 34px 0;
+    }
   </style>
 </head>
 
@@ -110,16 +123,14 @@
   <div class="contenedor">
     <h1>Consulta de estado de tesis</h1>
     <p>
-      Ingrese su ID, correo electrónico y clave de acceso para consultar el estado de su trabajo académico.
+      Ingrese su ID, correo electronico y clave de acceso para consultar el estado de su trabajo academico.
     </p>
 
     <div class="caja">
-      <h2>Estudiante</h2>
-
       <label for="id">ID de registro</label>
       <input id="id" type="text" placeholder="Ejemplo: TESIS-20260706091128" />
 
-      <label for="correo">Correo electrónico</label>
+      <label for="correo">Correo electronico</label>
       <input id="correo" type="email" placeholder="correo@ejemplo.com" />
 
       <label for="clave">Clave de acceso</label>
@@ -130,10 +141,12 @@
       <div id="resultado" class="resultado"></div>
     </div>
 
-    <div class="caja">
+    <div class="separador"></div>
+
+    <div class="caja admin">
       <h2>Administrador</h2>
       <p>
-        Use esta sección para autorizar a un estudiante y generar su clave de acceso.
+        Autorice un registro para generar la clave del estudiante y enviarle el acceso por correo.
       </p>
 
       <label for="adminId">ID del estudiante</label>
@@ -142,11 +155,111 @@
       <label for="adminClave">Clave de administrador</label>
       <input id="adminClave" type="password" placeholder="Clave de administrador" />
 
-      <button class="boton-admin" onclick="autorizarEstudiante()">Autorizar estudiante</button>
+      <button onclick="autorizarEstudiante()">Autorizar estudiante</button>
 
       <div id="resultadoAdmin" class="resultado"></div>
     </div>
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwE2OgTF7DjI
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwE2OgTF7DjI5nJHn7W4O2BgGepbAaJ9YvqiIj3IV57x6D9YWM4wlwHe7TqjyBWrbcCjw/exec";
+
+    async function consultarEstado() {
+      const id = document.getElementById("id").value.trim();
+      const correo = document.getElementById("correo").value.trim();
+      const clave = document.getElementById("clave").value.trim();
+      const resultado = document.getElementById("resultado");
+
+      resultado.style.display = "block";
+      resultado.className = "resultado";
+      resultado.innerHTML = "Consultando...";
+
+      if (!id || !correo || !clave) {
+        resultado.className = "resultado error";
+        resultado.innerHTML = "Debe ingresar ID, correo electronico y clave de acceso.";
+        return;
+      }
+
+      const url =
+        SCRIPT_URL +
+        "?action=consultar" +
+        "&id=" + encodeURIComponent(id) +
+        "&correo=" + encodeURIComponent(correo) +
+        "&clave=" + encodeURIComponent(clave);
+
+      try {
+        const respuesta = await fetch(url);
+        const datos = await respuesta.json();
+
+        if (!datos.ok) {
+          resultado.className = "resultado error";
+          resultado.innerHTML = datos.mensaje || "No se encontro el registro.";
+          return;
+        }
+
+        resultado.className = "resultado exito";
+        resultado.innerHTML = `
+          <div class="dato"><strong>ID:</strong> ${datos.id || ""}</div>
+          <div class="dato"><strong>Nombre:</strong> ${datos.nombre || ""}</div>
+          <div class="dato"><strong>Correo:</strong> ${datos.correo || ""}</div>
+          <div class="dato"><strong>Universidad:</strong> ${datos.universidad || ""}</div>
+          <div class="dato"><strong>Nivel academico:</strong> ${datos.nivel || ""}</div>
+          <div class="dato"><strong>Tipo de servicio:</strong> ${datos.tipoServicio || ""}</div>
+          <div class="dato"><strong>Titulo o tema:</strong> ${datos.titulo || ""}</div>
+          <div class="dato"><strong>Estado:</strong> ${datos.estado || ""}</div>
+          <div class="dato"><strong>Ultima actualizacion:</strong> ${datos.ultimaActualizacion || ""}</div>
+          <div class="dato"><strong>Observaciones:</strong> ${datos.observaciones || ""}</div>
+          ${
+            datos.linkDocs
+              ? `<div class="dato"><strong>Google Docs:</strong> <a href="${datos.linkDocs}" target="_blank">Abrir documento</a></div>`
+              : ""
+          }
+        `;
+      } catch (error) {
+        resultado.className = "resultado error";
+        resultado.innerHTML = "No se pudo consultar. Revise la conexion o la implementacion.";
+      }
+    }
+
+    async function autorizarEstudiante() {
+      const id = document.getElementById("adminId").value.trim();
+      const claveAdmin = document.getElementById("adminClave").value.trim();
+      const resultadoAdmin = document.getElementById("resultadoAdmin");
+
+      resultadoAdmin.style.display = "block";
+      resultadoAdmin.className = "resultado";
+      resultadoAdmin.innerHTML = "Autorizando...";
+
+      if (!id || !claveAdmin) {
+        resultadoAdmin.className = "resultado error";
+        resultadoAdmin.innerHTML = "Debe ingresar el ID del estudiante y la clave de administrador.";
+        return;
+      }
+
+      const url =
+        SCRIPT_URL +
+        "?action=autorizar_subida" +
+        "&id=" + encodeURIComponent(id) +
+        "&clave_admin=" + encodeURIComponent(claveAdmin);
+
+      try {
+        const respuesta = await fetch(url);
+        const datos = await respuesta.json();
+
+        if (!datos.ok) {
+          resultadoAdmin.className = "resultado error";
+          resultadoAdmin.innerHTML = datos.mensaje || "No se pudo autorizar.";
+          return;
+        }
+
+        resultadoAdmin.className = "resultado exito";
+        resultadoAdmin.innerHTML =
+          "Estudiante autorizado correctamente. Se genero la clave y se envio el correo.";
+      } catch (error) {
+        resultadoAdmin.className = "resultado error";
+        resultadoAdmin.innerHTML = "No se pudo autorizar. Revise la conexion o la implementacion.";
+      }
+    }
+  </script>
+</body>
+</html>
