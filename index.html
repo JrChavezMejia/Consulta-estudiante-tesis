@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consulta de Estado de Tesis</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #071426;
+      color: #ffffff;
+    }
+
+    .contenedor {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 18px;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      color: #19d3e6;
+    }
+
+    p {
+      line-height: 1.5;
+      color: #d6e6f2;
+    }
+
+    .caja {
+      background: #0d1f36;
+      border: 1px solid #2f5c7c;
+      border-radius: 8px;
+      padding: 22px;
+      margin-top: 22px;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #3c6d91;
+      background: #071426;
+      color: #ffffff;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      border: 0;
+      border-radius: 6px;
+      background: #19d3e6;
+      color: #00111f;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .resultado {
+      margin-top: 22px;
+      padding: 18px;
+      border-radius: 8px;
+      background: #06111f;
+      border: 1px solid #2f5c7c;
+      display: none;
+    }
+
+    .error {
+      border-color: #ff6b6b;
+      color: #ffd6d6;
+    }
+
+    .dato {
+      margin-bottom: 10px;
+    }
+
+    .dato strong {
+      color: #19d3e6;
+    }
+
+    a {
+      color: #19d3e6;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="contenedor">
+    <h1>Consulta de estado de tesis</h1>
+    <p>
+      Ingrese su ID de registro o su correo electrónico para consultar el estado de su trabajo académico.
+    </p>
+
+    <div class="caja">
+      <label for="id">ID de registro</label>
+      <input id="id" type="text" placeholder="Ejemplo: TESIS-20260707123000" />
+
+      <label for="correo">Correo electrónico</label>
+      <input id="correo" type="email" placeholder="correo@ejemplo.com" />
+
+      <button onclick="consultarEstado()">Consultar estado</button>
+
+      <div id="resultado" class="resultado"></div>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygmhhMQ5kQwu_cVI5DvPwN7mQe8V0AOwegbUmizuwNXsRudquco31e7fO02TXGShwi6A/exec";
+
+    async function consultarEstado() {
+      const id = document.getElementById("id").value.trim();
+      const correo = document.getElementById("correo").value.trim();
+      const resultado = document.getElementById("resultado");
+
+      resultado.style.display = "block";
+      resultado.className = "resultado";
+      resultado.innerHTML = "Consultando...";
+
+      if (!id && !correo) {
+        resultado.className = "resultado error";
+        resultado.innerHTML = "Debe ingresar el ID o el correo electrónico.";
+        return;
+      }
+
+      const url =
+        SCRIPT_URL +
+        "?action=consultar" +
+        "&id=" + encodeURIComponent(id) +
+        "&correo=" + encodeURIComponent(correo);
+
+      try {
+        const respuesta = await fetch(url);
+        const datos = await respuesta.json();
+
+        if (!datos.ok) {
+          resultado.className = "resultado error";
+          resultado.innerHTML = datos.mensaje || "No se encontró el registro.";
+          return;
+        }
+
+        resultado.innerHTML = `
+          <div class="dato"><strong>ID:</strong> ${datos.id || ""}</div>
+          <div class="dato"><strong>Nombre:</strong> ${datos.nombre || ""}</div>
+          <div class="dato"><strong>Correo:</strong> ${datos.correo || ""}</div>
+          <div class="dato"><strong>Universidad:</strong> ${datos.universidad || ""}</div>
+          <div class="dato"><strong>Nivel académico:</strong> ${datos.nivel || ""}</div>
+          <div class="dato"><strong>Tipo de servicio:</strong> ${datos.tipoServicio || ""}</div>
+          <div class="dato"><strong>Título o tema:</strong> ${datos.titulo || ""}</div>
+          <div class="dato"><strong>Estado:</strong> ${datos.estado || ""}</div>
+          <div class="dato"><strong>Última actualización:</strong> ${datos.ultimaActualizacion || ""}</div>
+          <div class="dato"><strong>Observaciones:</strong> ${datos.observaciones || ""}</div>
+          ${
+            datos.linkDocs
+              ? `<div class="dato"><strong>Google Docs:</strong> <a href="${datos.linkDocs}" target="_blank">Abrir documento</a></div>`
+              : ""
+          }
+        `;
+      } catch (error) {
+        resultado.className = "resultado error";
+        resultado.innerHTML = "No se pudo consultar. Revise la conexión o la implementación.";
+      }
+    }
+  </script>
+</body>
+</html>
