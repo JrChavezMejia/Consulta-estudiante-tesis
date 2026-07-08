@@ -14,21 +14,13 @@
     }
 
     .contenedor {
-      max-width: 780px;
+      max-width: 920px;
       margin: 0 auto;
       padding: 32px 18px;
     }
 
     h1, h2 {
       color: #19d3e6;
-    }
-
-    h1 {
-      margin-bottom: 8px;
-    }
-
-    h2 {
-      margin-top: 0;
     }
 
     p {
@@ -107,6 +99,24 @@
       color: #19d3e6;
     }
 
+    .pendiente {
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px solid #2f5c7c;
+      border-radius: 8px;
+      background: #071426;
+    }
+
+    .pendiente h3 {
+      margin-top: 0;
+      color: #ffffff;
+    }
+
+    .pendiente button {
+      background: #3ddc97;
+      color: #002015;
+    }
+
     a {
       color: #19d3e6;
     }
@@ -146,18 +156,16 @@
     <div class="caja admin">
       <h2>Administrador</h2>
       <p>
-        Autorice un registro para generar la clave del estudiante y enviarle el acceso por correo.
+        Ingrese su clave de administrador para cargar las tesis pendientes y autorizar con un clic.
       </p>
-
-      <label for="adminId">ID del estudiante</label>
-      <input id="adminId" type="text" placeholder="Ejemplo: TESIS-20260706091128" />
 
       <label for="adminClave">Clave de administrador</label>
       <input id="adminClave" type="password" placeholder="Clave de administrador" />
 
-      <button onclick="autorizarEstudiante()">Autorizar estudiante</button>
+      <button onclick="listarPendientes()">Ver tesis pendientes</button>
 
       <div id="resultadoAdmin" class="resultado"></div>
+      <div id="listaPendientes"></div>
     </div>
   </div>
 
@@ -221,20 +229,81 @@
       }
     }
 
-    async function autorizarEstudiante() {
-      const id = document.getElementById("adminId").value.trim();
+    async function listarPendientes() {
       const claveAdmin = document.getElementById("adminClave").value.trim();
       const resultadoAdmin = document.getElementById("resultadoAdmin");
+      const listaPendientes = document.getElementById("listaPendientes");
+
+      resultadoAdmin.style.display = "block";
+      resultadoAdmin.className = "resultado";
+      resultadoAdmin.innerHTML = "Cargando pendientes...";
+      listaPendientes.innerHTML = "";
+
+      if (!claveAdmin) {
+        resultadoAdmin.className = "resultado error";
+        resultadoAdmin.innerHTML = "Debe ingresar la clave de administrador.";
+        return;
+      }
+
+      const url =
+        SCRIPT_URL +
+        "?action=listar_pendientes" +
+        "&clave_admin=" + encodeURIComponent(claveAdmin);
+
+      try {
+        const respuesta = await fetch(url);
+        const datos = await respuesta.json();
+
+        if (!datos.ok) {
+          resultadoAdmin.className = "resultado error";
+          resultadoAdmin.innerHTML = datos.mensaje || "No se pudieron cargar los pendientes.";
+          return;
+        }
+
+        const pendientes = datos.pendientes || [];
+
+        if (pendientes.length === 0) {
+          resultadoAdmin.className = "resultado exito";
+          resultadoAdmin.innerHTML = "No hay tesis pendientes de autorizacion.";
+          return;
+        }
+
+        resultadoAdmin.className = "resultado exito";
+        resultadoAdmin.innerHTML = "Tesis pendientes encontradas: " + pendientes.length;
+
+        listaPendientes.innerHTML = pendientes.map(function(item) {
+          return `
+            <div class="pendiente">
+              <h3>${item.nombre || "Sin nombre"}</h3>
+              <div class="dato"><strong>ID:</strong> ${item.id || ""}</div>
+              <div class="dato"><strong>Correo:</strong> ${item.correo || ""}</div>
+              <div class="dato"><strong>Universidad:</strong> ${item.universidad || ""}</div>
+              <div class="dato"><strong>Nivel:</strong> ${item.nivel || ""}</div>
+              <div class="dato"><strong>Servicio:</strong> ${item.tipoServicio || ""}</div>
+              <div class="dato"><strong>Titulo:</strong> ${item.titulo || ""}</div>
+              <div class="dato"><strong>Estado:</strong> ${item.estado || ""}</div>
+              <button onclick="autorizarPendiente('${item.id}')">Autorizar esta tesis</button>
+            </div>
+          `;
+        }).join("");
+
+      } catch (error) {
+        resultadoAdmin.className = "resultado error";
+        resultadoAdmin.innerHTML = "No se pudieron cargar los pendientes.";
+      }
+    }
+
+    async function autorizarPendiente(id) {
+      const claveAdmin = document.getElementById("adminClave").value.trim();
+      const resultadoAdmin = document.getElementById("resultadoAdmin");
+
+      if (!confirm("¿Autorizar esta tesis?")) {
+        return;
+      }
 
       resultadoAdmin.style.display = "block";
       resultadoAdmin.className = "resultado";
       resultadoAdmin.innerHTML = "Autorizando...";
-
-      if (!id || !claveAdmin) {
-        resultadoAdmin.className = "resultado error";
-        resultadoAdmin.innerHTML = "Debe ingresar el ID del estudiante y la clave de administrador.";
-        return;
-      }
 
       const url =
         SCRIPT_URL +
@@ -254,10 +323,13 @@
 
         resultadoAdmin.className = "resultado exito";
         resultadoAdmin.innerHTML =
-          "Estudiante autorizado correctamente. Se genero la clave y se envio el correo.";
+          "Tesis autorizada correctamente. Se envio el correo al estudiante.";
+
+        listarPendientes();
+
       } catch (error) {
         resultadoAdmin.className = "resultado error";
-        resultadoAdmin.innerHTML = "No se pudo autorizar. Revise la conexion o la implementacion.";
+        resultadoAdmin.innerHTML = "No se pudo autorizar.";
       }
     }
   </script>
