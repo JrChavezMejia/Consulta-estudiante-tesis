@@ -14,12 +14,12 @@
     }
 
     .contenedor {
-      max-width: 920px;
+      max-width: 960px;
       margin: 0 auto;
       padding: 32px 18px;
     }
 
-    h1, h2 {
+    h1, h2, h3 {
       color: #19d3e6;
     }
 
@@ -36,6 +36,29 @@
       margin-top: 22px;
     }
 
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .tab {
+      padding: 13px;
+      border: 1px solid #2f5c7c;
+      border-radius: 6px;
+      background: #071426;
+      color: #ffffff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .tab.activo {
+      background: #19d3e6;
+      color: #00111f;
+      border-color: #19d3e6;
+    }
+
     label {
       display: block;
       margin-top: 14px;
@@ -43,7 +66,7 @@
       font-weight: bold;
     }
 
-    input {
+    input, select, textarea {
       width: 100%;
       padding: 12px;
       border-radius: 6px;
@@ -52,6 +75,11 @@
       color: #ffffff;
       font-size: 16px;
       box-sizing: border-box;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
     }
 
     button {
@@ -67,9 +95,19 @@
       cursor: pointer;
     }
 
-    .admin button {
+    button.secundario {
       background: #ffd166;
       color: #1b1300;
+    }
+
+    button.verde {
+      background: #3ddc97;
+      color: #002015;
+    }
+
+    button:disabled {
+      opacity: .65;
+      cursor: not-allowed;
     }
 
     .resultado {
@@ -99,7 +137,7 @@
       color: #19d3e6;
     }
 
-    .pendiente {
+    .trabajo {
       margin-top: 16px;
       padding: 16px;
       border: 1px solid #2f5c7c;
@@ -107,24 +145,24 @@
       background: #071426;
     }
 
-    .pendiente h3 {
-      margin-top: 0;
-      color: #ffffff;
+    .grid-dos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
 
-    .pendiente button {
-      background: #3ddc97;
-      color: #002015;
+    .oculto {
+      display: none;
     }
 
     a {
       color: #19d3e6;
     }
 
-    .separador {
-      height: 1px;
-      background: #2f5c7c;
-      margin: 34px 0;
+    @media (max-width: 720px) {
+      .tabs, .grid-dos {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -132,15 +170,21 @@
 <body>
   <div class="contenedor">
     <h1>Consulta de estado de tesis</h1>
-    <p>
-      Ingrese su ID, correo electronico y clave de acceso para consultar el estado de su trabajo academico.
-    </p>
+    <p>Seleccione el tipo de acceso para continuar.</p>
 
-    <div class="caja">
+    <div class="tabs">
+      <button class="tab activo" id="tabEstudiante" onclick="mostrarAcceso('estudiante')">Estudiante</button>
+      <button class="tab" id="tabAdmin" onclick="mostrarAcceso('admin')">Administrador</button>
+    </div>
+
+    <div id="panelEstudiante" class="caja">
+      <h2>Acceso estudiante</h2>
+      <p>Ingrese su ID, correo electrónico y clave de acceso.</p>
+
       <label for="id">ID de registro</label>
       <input id="id" type="text" placeholder="Ejemplo: TESIS-20260706091128" />
 
-      <label for="correo">Correo electronico</label>
+      <label for="correo">Correo electrónico</label>
       <input id="correo" type="email" placeholder="correo@ejemplo.com" />
 
       <label for="clave">Clave de acceso</label>
@@ -151,26 +195,29 @@
       <div id="resultado" class="resultado"></div>
     </div>
 
-    <div class="separador"></div>
-
-    <div class="caja admin">
-      <h2>Administrador</h2>
-      <p>
-        Ingrese su clave de administrador para cargar las tesis pendientes y autorizar con un clic.
-      </p>
+    <div id="panelAdmin" class="caja oculto">
+      <h2>Acceso administrador</h2>
+      <p>Ingrese su clave para cargar los trabajos y administrar estados.</p>
 
       <label for="adminClave">Clave de administrador</label>
       <input id="adminClave" type="password" placeholder="Clave de administrador" />
 
-      <button onclick="listarPendientes()">Ver tesis pendientes</button>
+      <button class="secundario" onclick="listarTrabajos()">Ingresar y cargar trabajos</button>
 
       <div id="resultadoAdmin" class="resultado"></div>
-      <div id="listaPendientes"></div>
+      <div id="listaTrabajos"></div>
     </div>
   </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwE2OgTF7DjI5nJHn7W4O2BgGepbAaJ9YvqiIj3IV57x6D9YWM4wlwHe7TqjyBWrbcCjw/exec";
+
+    function mostrarAcceso(tipo) {
+      document.getElementById("panelEstudiante").classList.toggle("oculto", tipo !== "estudiante");
+      document.getElementById("panelAdmin").classList.toggle("oculto", tipo !== "admin");
+      document.getElementById("tabEstudiante").classList.toggle("activo", tipo === "estudiante");
+      document.getElementById("tabAdmin").classList.toggle("activo", tipo === "admin");
+    }
 
     async function consultarEstado() {
       const id = document.getElementById("id").value.trim();
@@ -184,12 +231,11 @@
 
       if (!id || !correo || !clave) {
         resultado.className = "resultado error";
-        resultado.innerHTML = "Debe ingresar ID, correo electronico y clave de acceso.";
+        resultado.innerHTML = "Debe ingresar ID, correo electrónico y clave de acceso.";
         return;
       }
 
-      const url =
-        SCRIPT_URL +
+      const url = SCRIPT_URL +
         "?action=consultar" +
         "&id=" + encodeURIComponent(id) +
         "&correo=" + encodeURIComponent(correo) +
@@ -201,7 +247,7 @@
 
         if (!datos.ok) {
           resultado.className = "resultado error";
-          resultado.innerHTML = datos.mensaje || "No se encontro el registro.";
+          resultado.innerHTML = datos.mensaje || "No se encontró el registro.";
           return;
         }
 
@@ -211,33 +257,29 @@
           <div class="dato"><strong>Nombre:</strong> ${datos.nombre || ""}</div>
           <div class="dato"><strong>Correo:</strong> ${datos.correo || ""}</div>
           <div class="dato"><strong>Universidad:</strong> ${datos.universidad || ""}</div>
-          <div class="dato"><strong>Nivel academico:</strong> ${datos.nivel || ""}</div>
+          <div class="dato"><strong>Nivel académico:</strong> ${datos.nivel || ""}</div>
           <div class="dato"><strong>Tipo de servicio:</strong> ${datos.tipoServicio || ""}</div>
-          <div class="dato"><strong>Titulo o tema:</strong> ${datos.titulo || ""}</div>
+          <div class="dato"><strong>Título o tema:</strong> ${datos.titulo || ""}</div>
           <div class="dato"><strong>Estado:</strong> ${datos.estado || ""}</div>
-          <div class="dato"><strong>Ultima actualizacion:</strong> ${datos.ultimaActualizacion || ""}</div>
+          <div class="dato"><strong>Última actualización:</strong> ${datos.ultimaActualizacion || ""}</div>
           <div class="dato"><strong>Observaciones:</strong> ${datos.observaciones || ""}</div>
-          ${
-            datos.linkDocs
-              ? `<div class="dato"><strong>Google Docs:</strong> <a href="${datos.linkDocs}" target="_blank">Abrir documento</a></div>`
-              : ""
-          }
+          ${datos.linkDocs ? `<div class="dato"><strong>Google Docs:</strong> <a href="${datos.linkDocs}" target="_blank">Abrir documento</a></div>` : ""}
         `;
       } catch (error) {
         resultado.className = "resultado error";
-        resultado.innerHTML = "No se pudo consultar. Revise la conexion o la implementacion.";
+        resultado.innerHTML = "No se pudo consultar. Revise la conexión o la implementación.";
       }
     }
 
-    async function listarPendientes() {
+    async function listarTrabajos() {
       const claveAdmin = document.getElementById("adminClave").value.trim();
       const resultadoAdmin = document.getElementById("resultadoAdmin");
-      const listaPendientes = document.getElementById("listaPendientes");
+      const listaTrabajos = document.getElementById("listaTrabajos");
 
       resultadoAdmin.style.display = "block";
       resultadoAdmin.className = "resultado";
-      resultadoAdmin.innerHTML = "Cargando pendientes...";
-      listaPendientes.innerHTML = "";
+      resultadoAdmin.innerHTML = "Cargando trabajos...";
+      listaTrabajos.innerHTML = "";
 
       if (!claveAdmin) {
         resultadoAdmin.className = "resultado error";
@@ -245,8 +287,7 @@
         return;
       }
 
-      const url =
-        SCRIPT_URL +
+      const url = SCRIPT_URL +
         "?action=listar_pendientes" +
         "&clave_admin=" + encodeURIComponent(claveAdmin);
 
@@ -256,57 +297,82 @@
 
         if (!datos.ok) {
           resultadoAdmin.className = "resultado error";
-          resultadoAdmin.innerHTML = datos.mensaje || "No se pudieron cargar los pendientes.";
+          resultadoAdmin.innerHTML = datos.mensaje || "No se pudieron cargar los trabajos.";
           return;
         }
 
-        const pendientes = datos.pendientes || [];
+        const trabajos = datos.pendientes || [];
 
-        if (pendientes.length === 0) {
+        if (trabajos.length === 0) {
           resultadoAdmin.className = "resultado exito";
-          resultadoAdmin.innerHTML = "No hay tesis pendientes de autorizacion.";
+          resultadoAdmin.innerHTML = "No hay trabajos pendientes de autorización.";
           return;
         }
 
         resultadoAdmin.className = "resultado exito";
-        resultadoAdmin.innerHTML = "Tesis pendientes encontradas: " + pendientes.length;
+        resultadoAdmin.innerHTML = "Trabajos cargados: " + trabajos.length;
 
-        listaPendientes.innerHTML = pendientes.map(function(item) {
+        listaTrabajos.innerHTML = trabajos.map(function(item) {
+          const idSeguro = String(item.id || "").replace(/'/g, "&#39;");
           return `
-            <div class="pendiente">
+            <div class="trabajo" id="trabajo-${idSeguro}">
               <h3>${item.nombre || "Sin nombre"}</h3>
               <div class="dato"><strong>ID:</strong> ${item.id || ""}</div>
               <div class="dato"><strong>Correo:</strong> ${item.correo || ""}</div>
               <div class="dato"><strong>Universidad:</strong> ${item.universidad || ""}</div>
               <div class="dato"><strong>Nivel:</strong> ${item.nivel || ""}</div>
               <div class="dato"><strong>Servicio:</strong> ${item.tipoServicio || ""}</div>
-              <div class="dato"><strong>Titulo:</strong> ${item.titulo || ""}</div>
-              <div class="dato"><strong>Estado:</strong> ${item.estado || ""}</div>
-              <button onclick="autorizarPendiente('${item.id}')">Autorizar esta tesis</button>
+              <div class="dato"><strong>Título:</strong> ${item.titulo || ""}</div>
+              <div class="dato"><strong>Estado actual:</strong> ${item.estado || ""}</div>
+
+              <button class="verde" onclick="autorizarTrabajo('${idSeguro}')">Autorizar tesis</button>
+
+              <div class="grid-dos">
+                <div>
+                  <label>Nuevo estado</label>
+                  <select id="estado-${idSeguro}">
+                    <option value="Recibido">Recibido</option>
+                    <option value="En revisión">En revisión</option>
+                    <option value="Con observaciones">Con observaciones</option>
+                    <option value="En espera del estudiante">En espera del estudiante</option>
+                    <option value="Finalizado">Finalizado</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label>Notificar por correo</label>
+                  <select id="notificar-${idSeguro}">
+                    <option value="No">No</option>
+                    <option value="Si">Sí</option>
+                  </select>
+                </div>
+              </div>
+
+              <label>Observaciones</label>
+              <textarea id="observaciones-${idSeguro}" placeholder="Escriba observaciones para el estudiante"></textarea>
+
+              <button onclick="guardarEstado('${idSeguro}')">Guardar estado y observaciones</button>
             </div>
           `;
         }).join("");
 
       } catch (error) {
         resultadoAdmin.className = "resultado error";
-        resultadoAdmin.innerHTML = "No se pudieron cargar los pendientes.";
+        resultadoAdmin.innerHTML = "No se pudieron cargar los trabajos.";
       }
     }
 
-    async function autorizarPendiente(id) {
+    async function autorizarTrabajo(id) {
       const claveAdmin = document.getElementById("adminClave").value.trim();
       const resultadoAdmin = document.getElementById("resultadoAdmin");
 
-      if (!confirm("¿Autorizar esta tesis?")) {
-        return;
-      }
+      if (!confirm("¿Autorizar esta tesis?")) return;
 
       resultadoAdmin.style.display = "block";
       resultadoAdmin.className = "resultado";
       resultadoAdmin.innerHTML = "Autorizando...";
 
-      const url =
-        SCRIPT_URL +
+      const url = SCRIPT_URL +
         "?action=autorizar_subida" +
         "&id=" + encodeURIComponent(id) +
         "&clave_admin=" + encodeURIComponent(claveAdmin);
@@ -322,14 +388,48 @@
         }
 
         resultadoAdmin.className = "resultado exito";
-        resultadoAdmin.innerHTML =
-          "Tesis autorizada correctamente. Se envio el correo al estudiante.";
-
-        listarPendientes();
-
+        resultadoAdmin.innerHTML = "Tesis autorizada correctamente. Se envió el correo al estudiante.";
+        listarTrabajos();
       } catch (error) {
         resultadoAdmin.className = "resultado error";
         resultadoAdmin.innerHTML = "No se pudo autorizar.";
+      }
+    }
+
+    async function guardarEstado(id) {
+      const claveAdmin = document.getElementById("adminClave").value.trim();
+      const estado = document.getElementById("estado-" + id).value;
+      const observaciones = document.getElementById("observaciones-" + id).value.trim();
+      const notificar = document.getElementById("notificar-" + id).value;
+      const resultadoAdmin = document.getElementById("resultadoAdmin");
+
+      resultadoAdmin.style.display = "block";
+      resultadoAdmin.className = "resultado";
+      resultadoAdmin.innerHTML = "Guardando cambios...";
+
+      const url = SCRIPT_URL +
+        "?action=actualizar_estado" +
+        "&id=" + encodeURIComponent(id) +
+        "&estado=" + encodeURIComponent(estado) +
+        "&observaciones=" + encodeURIComponent(observaciones) +
+        "&notificar=" + encodeURIComponent(notificar) +
+        "&clave_admin=" + encodeURIComponent(claveAdmin);
+
+      try {
+        const respuesta = await fetch(url);
+        const datos = await respuesta.json();
+
+        if (!datos.ok) {
+          resultadoAdmin.className = "resultado error";
+          resultadoAdmin.innerHTML = datos.mensaje || "No se pudo actualizar el estado.";
+          return;
+        }
+
+        resultadoAdmin.className = "resultado exito";
+        resultadoAdmin.innerHTML = "Estado actualizado correctamente.";
+      } catch (error) {
+        resultadoAdmin.className = "resultado error";
+        resultadoAdmin.innerHTML = "No se pudo actualizar el estado.";
       }
     }
   </script>
