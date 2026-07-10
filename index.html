@@ -200,10 +200,18 @@
     }
 
     .filtros {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      display: block;
       margin-top: 16px;
+    }
+
+    .busqueda-admin {
+      margin-top: 18px;
+      margin-bottom: 16px;
+      max-width: 520px;
+    }
+
+    .mensaje-trabajo {
+      margin: 14px 0;
     }
 
     .filtro-estados {
@@ -267,6 +275,17 @@
       background: #3ddc97;
       border-color: #3ddc97;
       box-shadow: 0 0 16px rgba(61, 220, 151, 0.75);
+    }
+
+    .filtro-chip.papelera::before {
+      background: #2b3442;
+      border-color: #8fa6c6;
+    }
+
+    .filtro-chip.papelera.activo::before {
+      background: #ffd166;
+      border-color: #ffd166;
+      box-shadow: 0 0 16px rgba(255, 209, 102, 0.7);
     }
 
     .progreso {
@@ -409,15 +428,15 @@
       <button type="button" class="secundario" onclick="listarTrabajos()">Ingresar</button>
 
       <div id="herramientasAdmin" class="oculto">
+      <div class="busqueda-admin">
+        <label for="filtroTexto">Buscar tesis</label>
+        <input id="filtroTexto" type="text" placeholder="Nombre, correo, título o ID" oninput="pintarTrabajos()" />
+      </div>
+
       <div class="filtros">
         <div>
           <label>Filtrar por estado</label>
           <div id="filtroEstadoBotones" class="filtro-estados"></div>
-        </div>
-
-        <div>
-          <label for="filtroTexto">Buscar</label>
-          <input id="filtroTexto" type="text" placeholder="Nombre, correo, título o ID" oninput="pintarTrabajos()" />
         </div>
       </div>
       </div>
@@ -449,6 +468,7 @@
 
     let trabajosCache = [];
     let filtroEstadoActual = "";
+    let mensajesTrabajo = {};
 
     function normalizarEstado(estado) {
       const limpio = String(estado || "").trim();
@@ -464,10 +484,12 @@
       contenedor.innerHTML = opciones.map(function(nombre) {
         const valor = nombre === "Todos" ? "" : nombre;
         const activo = valor === filtroEstadoActual ? " activo" : "";
+        const etiqueta = nombre === "Finalizado" ? "Papelera / Finalizados" : nombre;
+        const clasePapelera = nombre === "Finalizado" ? " papelera" : "";
 
         return `
-          <button type="button" class="filtro-chip${activo}" onclick="filtrarPorEstado('${valor.replace(/'/g, "\\'")}')">
-            ${nombre}
+          <button type="button" class="filtro-chip${activo}${clasePapelera}" onclick="filtrarPorEstado('${valor.replace(/'/g, "\\'")}')">
+            ${etiqueta}
           </button>
         `;
       }).join("");
@@ -477,6 +499,20 @@
       filtroEstadoActual = estado;
       pintarBotonesEstado();
       pintarTrabajos();
+    }
+
+    function mostrarMensajeTrabajo(id, tipo, texto) {
+      mensajesTrabajo[String(id || "")] = {
+        tipo: tipo,
+        texto: texto
+      };
+
+      const mensaje = document.getElementById("mensaje-" + id);
+      if (!mensaje) return;
+
+      mensaje.style.display = "block";
+      mensaje.className = "resultado mensaje-trabajo " + tipo;
+      mensaje.innerHTML = texto;
     }
 
     function indiceEstado(estado) {
@@ -619,9 +655,12 @@
         }
 
         trabajosCache = datos.tesis || datos.pendientes || [];
+        const activas = trabajosCache.filter(function(item) {
+          return normalizarEstado(item.estado) !== "Finalizado";
+        }).length;
         herramientasAdmin.classList.remove("oculto");
         resultadoAdmin.className = "resultado exito";
-        resultadoAdmin.innerHTML = "Tesis cargadas: " + trabajosCache.length;
+        resultadoAdmin.innerHTML = "Tesis activas: " + activas;
         pintarTrabajos();
 
       } catch (error) {
@@ -639,7 +678,17 @@
       const filtrados = trabajosCache.filter(function(item) {
         const estado = normalizarEstado(item.estado);
         const texto = [item.id, item.nombre, item.correo, item.titulo, item.universidad].join(" ").toLowerCase();
-        return (!filtroEstado || estado === filtroEstado) && (!filtroTexto || texto.indexOf(filtroTexto) !== -1);
+        const coincideTexto = !filtroTexto || texto.indexOf(filtroTexto) !== -1;
+
+        if (!coincideTexto) {
+          return false;
+        }
+
+        if (!filtroEstado) {
+          return estado !== "Finalizado";
+        }
+
+        return estado === filtroEstado;
       });
 
       if (filtrados.length === 0) {
@@ -652,6 +701,7 @@
         const estado = normalizarEstado(item.estado);
         const autorizada = String(item.autorizada || "").toLowerCase() === "si";
         const puedeAutorizar = estado === "Aprobada para seguimiento" && !autorizada;
+        const mensaje = mensajesTrabajo[String(item.id || "")];
 
         return `
           <div class="trabajo" id="trabajo-${idSeguro}">
@@ -661,6 +711,10 @@
             </div>
 
             ${crearProgreso(estado)}
+
+            <div id="mensaje-${idSeguro}" class="resultado mensaje-trabajo ${mensaje ? mensaje.tipo : ""}" style="${mensaje ? "display:block" : ""}">
+              ${mensaje ? mensaje.texto : ""}
+            </div>
 
             <div class="dato"><strong>ID:</strong> ${item.id || ""}</div>
             <div class="dato"><strong>Correo:</strong> ${item.correo || ""}</div>
@@ -709,9 +763,8 @@
 
       if (!confirm("¿Autorizar acceso del estudiante a esta tesis?")) return;
 
-      resultadoAdmin.style.display = "block";
-      resultadoAdmin.className = "resultado";
-      resultadoAdmin.innerHTML = "Autorizando...";
+      resultadoAdmin.style.display = "none";
+      mostrarMensajeTrabajo(id, "", "Autorizando acceso...");
 
       const url = SCRIPT_URL +
         "?action=autorizar_subida" +
@@ -724,17 +777,26 @@
         const datos = await respuesta.json();
 
         if (!datos.ok) {
-          resultadoAdmin.className = "resultado error";
-          resultadoAdmin.innerHTML = datos.mensaje || "No se pudo autorizar.";
+          mostrarMensajeTrabajo(id, "error", datos.mensaje || "No se pudo autorizar.");
           return;
         }
 
-        resultadoAdmin.className = "resultado exito";
-        resultadoAdmin.innerHTML = "Acceso autorizado correctamente. Se envió el correo al estudiante.";
-        listarTrabajos();
+        const indice = trabajosCache.findIndex(function(item) {
+          return String(item.id || "") === String(id || "");
+        });
+
+        if (indice >= 0) {
+          trabajosCache[indice].autorizada = "Si";
+        }
+
+        mensajesTrabajo[String(id || "")] = {
+          tipo: "exito",
+          texto: "Acceso autorizado correctamente. Se envió el correo al estudiante."
+        };
+
+        pintarTrabajos();
       } catch (error) {
-        resultadoAdmin.className = "resultado error";
-        resultadoAdmin.innerHTML = "No se pudo autorizar.";
+        mostrarMensajeTrabajo(id, "error", "No se pudo autorizar.");
       }
     }
 
@@ -745,9 +807,8 @@
       const notificar = document.getElementById("notificar-" + id).value;
       const resultadoAdmin = document.getElementById("resultadoAdmin");
 
-      resultadoAdmin.style.display = "block";
-      resultadoAdmin.className = "resultado";
-      resultadoAdmin.innerHTML = "Guardando cambios...";
+      resultadoAdmin.style.display = "none";
+      mostrarMensajeTrabajo(id, "", "Guardando cambios...");
 
       const url = SCRIPT_URL +
         "?action=actualizar_estado" +
@@ -763,8 +824,7 @@
         const datos = await respuesta.json();
 
         if (!datos.ok) {
-          resultadoAdmin.className = "resultado error";
-          resultadoAdmin.innerHTML = datos.mensaje || "No se pudo actualizar el estado.";
+          mostrarMensajeTrabajo(id, "error", datos.mensaje || "No se pudo actualizar el estado.");
           return;
         }
 
@@ -786,12 +846,13 @@
           pintarBotonesEstado();
         }
 
-        resultadoAdmin.className = "resultado exito";
-        resultadoAdmin.innerHTML = "Estado actualizado correctamente.";
+        mensajesTrabajo[String(id || "")] = {
+          tipo: "exito",
+          texto: "Estado actualizado correctamente."
+        };
         pintarTrabajos();
       } catch (error) {
-        resultadoAdmin.className = "resultado error";
-        resultadoAdmin.innerHTML = "No se pudo actualizar el estado.";
+        mostrarMensajeTrabajo(id, "error", "No se pudo actualizar el estado.");
       }
     }
 
