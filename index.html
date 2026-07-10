@@ -14,7 +14,7 @@
     }
 
     .contenedor {
-      max-width: 960px;
+      max-width: 1060px;
       margin: 0 auto;
       padding: 32px 18px;
     }
@@ -105,8 +105,14 @@
       color: #002015;
     }
 
+    button.discreto {
+      background: #12314f;
+      color: #d6e6f2;
+      border: 1px solid #2f5c7c;
+    }
+
     button:disabled {
-      opacity: .65;
+      opacity: .55;
       cursor: not-allowed;
     }
 
@@ -138,11 +144,42 @@
     }
 
     .trabajo {
-      margin-top: 16px;
-      padding: 16px;
+      margin-top: 18px;
+      padding: 18px;
       border: 1px solid #2f5c7c;
       border-radius: 8px;
       background: #071426;
+    }
+
+    .trabajo-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .estado-badge {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #12314f;
+      border: 1px solid #2f5c7c;
+      color: #d6e6f2;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .estado-badge.alerta {
+      background: #3b2b05;
+      border-color: #ffd166;
+      color: #ffe7a3;
+    }
+
+    .estado-badge.exito-badge {
+      background: #06321f;
+      border-color: #3ddc97;
+      color: #d8ffe9;
     }
 
     .grid-dos {
@@ -151,17 +188,122 @@
       gap: 12px;
     }
 
+    .acciones {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
     .oculto {
       display: none;
+    }
+
+    .filtros {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .progreso {
+      margin: 18px 0 20px;
+      padding: 16px;
+      border-radius: 8px;
+      background: #06111f;
+      border: 1px solid #203e5f;
+    }
+
+    .progreso-linea {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      align-items: start;
+    }
+
+    .paso {
+      position: relative;
+      text-align: center;
+      color: #8fa6c6;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .punto {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      margin: 0 auto 8px;
+      background: #12314f;
+      border: 2px solid #2f5c7c;
+      box-sizing: border-box;
+    }
+
+    .paso.hecho .punto {
+      background: #19d3e6;
+      border-color: #19d3e6;
+      box-shadow: 0 0 14px rgba(25, 211, 230, .45);
+    }
+
+    .paso.actual .punto {
+      background: #ffd166;
+      border-color: #ffd166;
+      box-shadow: 0 0 16px rgba(255, 209, 102, .55);
+    }
+
+    .paso.final .punto {
+      background: #3ddc97;
+      border-color: #3ddc97;
+      box-shadow: 0 0 16px rgba(61, 220, 151, .55);
+    }
+
+    .paso.hecho,
+    .paso.actual,
+    .paso.final {
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .barra-avance {
+      height: 8px;
+      background: #12314f;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      border: 1px solid #2f5c7c;
+    }
+
+    .barra-avance span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #19d3e6, #3ddc97);
+      width: 0%;
     }
 
     a {
       color: #19d3e6;
     }
 
-    @media (max-width: 720px) {
-      .tabs, .grid-dos {
+    @media (max-width: 820px) {
+      .tabs, .grid-dos, .acciones, .filtros {
         grid-template-columns: 1fr;
+      }
+
+      .progreso-linea {
+        grid-template-columns: 1fr;
+        text-align: left;
+      }
+
+      .paso {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: left;
+      }
+
+      .punto {
+        margin: 0;
+        flex: 0 0 auto;
       }
     }
   </style>
@@ -196,13 +338,35 @@
     </div>
 
     <div id="panelAdmin" class="caja oculto">
-      <h2>Acceso administrador</h2>
-      <p>Ingrese su clave para cargar los trabajos y administrar estados.</p>
+      <h2>Panel de gestión de tesis</h2>
+      <p>Ingrese su clave para cargar los trabajos, revisar su avance, autorizar acceso y actualizar estados.</p>
 
       <label for="adminClave">Clave de administrador</label>
       <input id="adminClave" type="password" placeholder="Clave de administrador" />
 
-      <button class="secundario" onclick="listarTrabajos()">Ingresar y cargar trabajos</button>
+      <button class="secundario" onclick="listarTrabajos()">Ingresar y cargar tesis</button>
+
+      <div class="filtros">
+        <div>
+          <label for="filtroEstado">Filtrar por estado</label>
+          <select id="filtroEstado" onchange="pintarTrabajos()">
+            <option value="">Todos</option>
+            <option value="Solicitud recibida">Solicitud recibida</option>
+            <option value="En evaluación inicial">En evaluación inicial</option>
+            <option value="Información incompleta">Información incompleta</option>
+            <option value="Aprobada para seguimiento">Aprobada para seguimiento</option>
+            <option value="En revisión">En revisión</option>
+            <option value="Con observaciones">Con observaciones</option>
+            <option value="En espera del estudiante">En espera del estudiante</option>
+            <option value="Finalizado">Finalizado</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="filtroTexto">Buscar</label>
+          <input id="filtroTexto" type="text" placeholder="Nombre, correo, título o ID" oninput="pintarTrabajos()" />
+        </div>
+      </div>
 
       <div id="resultadoAdmin" class="resultado"></div>
       <div id="listaTrabajos"></div>
@@ -211,6 +375,70 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwE2OgTF7DjI5nJHn7W4O2BgGepbAaJ9YvqiIj3IV57x6D9YWM4wlwHe7TqjyBWrbcCjw/exec";
+
+    const ESTADOS = [
+      "Solicitud recibida",
+      "En evaluación inicial",
+      "Información incompleta",
+      "Aprobada para seguimiento",
+      "En revisión",
+      "Con observaciones",
+      "En espera del estudiante",
+      "Finalizado"
+    ];
+
+    const ESTADO_EQUIVALENTE = {
+      "Recibido": "Solicitud recibida",
+      "En revision": "En revisión",
+      "En revisiÃ³n": "En revisión"
+    };
+
+    let trabajosCache = [];
+
+    function normalizarEstado(estado) {
+      const limpio = String(estado || "").trim();
+      return ESTADO_EQUIVALENTE[limpio] || limpio || "Solicitud recibida";
+    }
+
+    function indiceEstado(estado) {
+      const estadoNormal = normalizarEstado(estado);
+      const idx = ESTADOS.indexOf(estadoNormal);
+      return idx >= 0 ? idx : 0;
+    }
+
+    function crearProgreso(estado) {
+      const idx = indiceEstado(estado);
+      const porcentaje = Math.round((idx / (ESTADOS.length - 1)) * 100);
+
+      return `
+        <div class="progreso">
+          <div class="barra-avance"><span style="width:${porcentaje}%"></span></div>
+          <div class="progreso-linea">
+            ${ESTADOS.map(function(nombre, i) {
+              let clase = "paso";
+              if (i < idx) clase += " hecho";
+              if (i === idx) clase += nombre === "Finalizado" ? " final" : " actual";
+              return `<div class="${clase}"><div class="punto"></div><div>${nombre}</div></div>`;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function badgeEstado(estado) {
+      const estadoNormal = normalizarEstado(estado);
+      let clase = "estado-badge";
+
+      if (estadoNormal === "Información incompleta" || estadoNormal === "En espera del estudiante" || estadoNormal === "Con observaciones") {
+        clase += " alerta";
+      }
+
+      if (estadoNormal === "Finalizado") {
+        clase += " exito-badge";
+      }
+
+      return `<span class="${clase}">${estadoNormal}</span>`;
+    }
 
     function mostrarAcceso(tipo) {
       document.getElementById("panelEstudiante").classList.toggle("oculto", tipo !== "estudiante");
@@ -251,16 +479,22 @@
           return;
         }
 
+        const estado = normalizarEstado(datos.estado);
+
         resultado.className = "resultado exito";
         resultado.innerHTML = `
+          <div class="trabajo-header">
+            <h3>${datos.titulo || "Trabajo académico"}</h3>
+            ${badgeEstado(estado)}
+          </div>
+          ${crearProgreso(estado)}
           <div class="dato"><strong>ID:</strong> ${datos.id || ""}</div>
           <div class="dato"><strong>Nombre:</strong> ${datos.nombre || ""}</div>
           <div class="dato"><strong>Correo:</strong> ${datos.correo || ""}</div>
           <div class="dato"><strong>Universidad:</strong> ${datos.universidad || ""}</div>
           <div class="dato"><strong>Nivel académico:</strong> ${datos.nivel || ""}</div>
           <div class="dato"><strong>Tipo de servicio:</strong> ${datos.tipoServicio || ""}</div>
-          <div class="dato"><strong>Título o tema:</strong> ${datos.titulo || ""}</div>
-          <div class="dato"><strong>Estado:</strong> ${datos.estado || ""}</div>
+          <div class="dato"><strong>Estado:</strong> ${estado}</div>
           <div class="dato"><strong>Última actualización:</strong> ${datos.ultimaActualizacion || ""}</div>
           <div class="dato"><strong>Observaciones:</strong> ${datos.observaciones || ""}</div>
           ${datos.linkDocs ? `<div class="dato"><strong>Google Docs:</strong> <a href="${datos.linkDocs}" target="_blank">Abrir documento</a></div>` : ""}
@@ -278,7 +512,7 @@
 
       resultadoAdmin.style.display = "block";
       resultadoAdmin.className = "resultado";
-      resultadoAdmin.innerHTML = "Cargando trabajos...";
+      resultadoAdmin.innerHTML = "Cargando tesis...";
       listaTrabajos.innerHTML = "";
 
       if (!claveAdmin) {
@@ -288,7 +522,7 @@
       }
 
       const url = SCRIPT_URL +
-        "?action=listar_pendientes" +
+        "?action=listar_tesis" +
         "&clave_admin=" + encodeURIComponent(claveAdmin);
 
       try {
@@ -297,76 +531,98 @@
 
         if (!datos.ok) {
           resultadoAdmin.className = "resultado error";
-          resultadoAdmin.innerHTML = datos.mensaje || "No se pudieron cargar los trabajos.";
+          resultadoAdmin.innerHTML = datos.mensaje || "No se pudieron cargar las tesis.";
           return;
         }
 
-        const trabajos = datos.pendientes || [];
-
-        if (trabajos.length === 0) {
-          resultadoAdmin.className = "resultado exito";
-          resultadoAdmin.innerHTML = "No hay trabajos pendientes de autorización.";
-          return;
-        }
-
+        trabajosCache = datos.tesis || datos.pendientes || [];
         resultadoAdmin.className = "resultado exito";
-        resultadoAdmin.innerHTML = "Trabajos cargados: " + trabajos.length;
-
-        listaTrabajos.innerHTML = trabajos.map(function(item) {
-          const idSeguro = String(item.id || "").replace(/'/g, "&#39;");
-          return `
-            <div class="trabajo" id="trabajo-${idSeguro}">
-              <h3>${item.nombre || "Sin nombre"}</h3>
-              <div class="dato"><strong>ID:</strong> ${item.id || ""}</div>
-              <div class="dato"><strong>Correo:</strong> ${item.correo || ""}</div>
-              <div class="dato"><strong>Universidad:</strong> ${item.universidad || ""}</div>
-              <div class="dato"><strong>Nivel:</strong> ${item.nivel || ""}</div>
-              <div class="dato"><strong>Servicio:</strong> ${item.tipoServicio || ""}</div>
-              <div class="dato"><strong>Título:</strong> ${item.titulo || ""}</div>
-              <div class="dato"><strong>Estado actual:</strong> ${item.estado || ""}</div>
-
-              <button class="verde" onclick="autorizarTrabajo('${idSeguro}')">Autorizar tesis</button>
-
-              <div class="grid-dos">
-                <div>
-                  <label>Nuevo estado</label>
-                  <select id="estado-${idSeguro}">
-                    <option value="Recibido">Recibido</option>
-                    <option value="En revisión">En revisión</option>
-                    <option value="Con observaciones">Con observaciones</option>
-                    <option value="En espera del estudiante">En espera del estudiante</option>
-                    <option value="Finalizado">Finalizado</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label>Notificar por correo</label>
-                  <select id="notificar-${idSeguro}">
-                    <option value="No">No</option>
-                    <option value="Si">Sí</option>
-                  </select>
-                </div>
-              </div>
-
-              <label>Observaciones</label>
-              <textarea id="observaciones-${idSeguro}" placeholder="Escriba observaciones para el estudiante"></textarea>
-
-              <button onclick="guardarEstado('${idSeguro}')">Guardar estado y observaciones</button>
-            </div>
-          `;
-        }).join("");
+        resultadoAdmin.innerHTML = "Tesis cargadas: " + trabajosCache.length;
+        pintarTrabajos();
 
       } catch (error) {
         resultadoAdmin.className = "resultado error";
-        resultadoAdmin.innerHTML = "No se pudieron cargar los trabajos.";
+        resultadoAdmin.innerHTML = "No se pudieron cargar las tesis.";
       }
+    }
+
+    function pintarTrabajos() {
+      const listaTrabajos = document.getElementById("listaTrabajos");
+      const filtroEstado = document.getElementById("filtroEstado").value;
+      const filtroTexto = document.getElementById("filtroTexto").value.trim().toLowerCase();
+
+      const filtrados = trabajosCache.filter(function(item) {
+        const estado = normalizarEstado(item.estado);
+        const texto = [item.id, item.nombre, item.correo, item.titulo, item.universidad].join(" ").toLowerCase();
+        return (!filtroEstado || estado === filtroEstado) && (!filtroTexto || texto.indexOf(filtroTexto) !== -1);
+      });
+
+      if (filtrados.length === 0) {
+        listaTrabajos.innerHTML = `<div class="resultado exito" style="display:block">No hay tesis con ese filtro.</div>`;
+        return;
+      }
+
+      listaTrabajos.innerHTML = filtrados.map(function(item) {
+        const idSeguro = String(item.id || "").replace(/'/g, "&#39;");
+        const estado = normalizarEstado(item.estado);
+        const autorizada = String(item.autorizada || "").toLowerCase() === "si";
+        const puedeAutorizar = estado === "Aprobada para seguimiento" && !autorizada;
+
+        return `
+          <div class="trabajo" id="trabajo-${idSeguro}">
+            <div class="trabajo-header">
+              <h3>${item.nombre || "Sin nombre"}</h3>
+              ${badgeEstado(estado)}
+            </div>
+
+            ${crearProgreso(estado)}
+
+            <div class="dato"><strong>ID:</strong> ${item.id || ""}</div>
+            <div class="dato"><strong>Correo:</strong> ${item.correo || ""}</div>
+            <div class="dato"><strong>Universidad:</strong> ${item.universidad || ""}</div>
+            <div class="dato"><strong>Nivel:</strong> ${item.nivel || ""}</div>
+            <div class="dato"><strong>Servicio:</strong> ${item.tipoServicio || ""}</div>
+            <div class="dato"><strong>Título:</strong> ${item.titulo || ""}</div>
+            <div class="dato"><strong>Acceso autorizado:</strong> ${autorizada ? "Sí" : "No"}</div>
+
+            <div class="grid-dos">
+              <div>
+                <label>Nuevo estado</label>
+                <select id="estado-${idSeguro}">
+                  ${ESTADOS.map(function(nombre) {
+                    return `<option value="${nombre}" ${nombre === estado ? "selected" : ""}>${nombre}</option>`;
+                  }).join("")}
+                </select>
+              </div>
+
+              <div>
+                <label>Notificar por correo</label>
+                <select id="notificar-${idSeguro}">
+                  <option value="No">No</option>
+                  <option value="Si">Sí</option>
+                </select>
+              </div>
+            </div>
+
+            <label>Observaciones</label>
+            <textarea id="observaciones-${idSeguro}" placeholder="Escriba observaciones para el estudiante">${item.observaciones || ""}</textarea>
+
+            <div class="acciones">
+              <button onclick="guardarEstado('${idSeguro}')">Guardar estado</button>
+              <button class="verde" onclick="autorizarTrabajo('${idSeguro}')" ${puedeAutorizar ? "" : "disabled"}>Autorizar acceso</button>
+            </div>
+
+            ${!puedeAutorizar && !autorizada ? `<p>Para autorizar acceso, primero cambie el estado a <strong>Aprobada para seguimiento</strong>.</p>` : ""}
+          </div>
+        `;
+      }).join("");
     }
 
     async function autorizarTrabajo(id) {
       const claveAdmin = document.getElementById("adminClave").value.trim();
       const resultadoAdmin = document.getElementById("resultadoAdmin");
 
-      if (!confirm("¿Autorizar esta tesis?")) return;
+      if (!confirm("¿Autorizar acceso del estudiante a esta tesis?")) return;
 
       resultadoAdmin.style.display = "block";
       resultadoAdmin.className = "resultado";
@@ -388,7 +644,7 @@
         }
 
         resultadoAdmin.className = "resultado exito";
-        resultadoAdmin.innerHTML = "Tesis autorizada correctamente. Se envió el correo al estudiante.";
+        resultadoAdmin.innerHTML = "Acceso autorizado correctamente. Se envió el correo al estudiante.";
         listarTrabajos();
       } catch (error) {
         resultadoAdmin.className = "resultado error";
@@ -427,6 +683,7 @@
 
         resultadoAdmin.className = "resultado exito";
         resultadoAdmin.innerHTML = "Estado actualizado correctamente.";
+        listarTrabajos();
       } catch (error) {
         resultadoAdmin.className = "resultado error";
         resultadoAdmin.innerHTML = "No se pudo actualizar el estado.";
