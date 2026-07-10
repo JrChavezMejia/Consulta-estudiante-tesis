@@ -116,6 +116,52 @@
       cursor: not-allowed;
     }
 
+    .cargador-global {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(3, 10, 20, 0.72);
+      backdrop-filter: blur(3px);
+    }
+
+    .cargador-global.activo {
+      display: flex;
+    }
+
+    .cargador-caja {
+      min-width: 220px;
+      padding: 28px 30px;
+      border-radius: 8px;
+      border: 1px solid #2f5c7c;
+      background: #071426;
+      text-align: center;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .cargador-asterisco {
+      display: block;
+      color: #19d3e6;
+      font-size: 66px;
+      line-height: 1;
+      text-shadow: 0 0 24px rgba(25, 211, 230, 0.8);
+      animation: girarAsterisco 1.05s linear infinite;
+    }
+
+    .cargador-texto {
+      margin-top: 10px;
+      color: #d6e6f2;
+      font-weight: bold;
+    }
+
+    @keyframes girarAsterisco {
+      from { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.12); }
+      to { transform: rotate(360deg) scale(1); }
+    }
+
     .resultado {
       margin-top: 22px;
       padding: 18px;
@@ -392,6 +438,13 @@
 </head>
 
 <body>
+  <div id="cargadorGlobal" class="cargador-global">
+    <div class="cargador-caja">
+      <span class="cargador-asterisco">*</span>
+      <div id="cargadorTexto" class="cargador-texto">Cargando...</div>
+    </div>
+  </div>
+
   <div class="contenedor">
     <h1>Consulta de estado de tesis</h1>
     <p>Seleccione el tipo de acceso para continuar.</p>
@@ -469,6 +522,27 @@
     let trabajosCache = [];
     let filtroEstadoActual = "";
     let mensajesTrabajo = {};
+
+    function mostrarCargador(texto) {
+      const cargador = document.getElementById("cargadorGlobal");
+      const cargadorTexto = document.getElementById("cargadorTexto");
+
+      if (cargadorTexto) {
+        cargadorTexto.innerHTML = texto || "Cargando...";
+      }
+
+      if (cargador) {
+        cargador.classList.add("activo");
+      }
+    }
+
+    function ocultarCargador() {
+      const cargador = document.getElementById("cargadorGlobal");
+
+      if (cargador) {
+        cargador.classList.remove("activo");
+      }
+    }
 
     function normalizarEstado(estado) {
       const limpio = String(estado || "").trim();
@@ -585,6 +659,7 @@
         "&clave=" + encodeURIComponent(clave);
 
       try {
+        mostrarCargador("Consultando...");
         const respuesta = await fetch(url);
         const datos = await respuesta.json();
 
@@ -617,6 +692,8 @@
       } catch (error) {
         resultado.className = "resultado error";
         resultado.innerHTML = "No se pudo consultar. Revise la conexión o la implementación.";
+      } finally {
+        ocultarCargador();
       }
     }
 
@@ -644,6 +721,7 @@
         "&clave_admin=" + encodeURIComponent(claveAdmin);
 
       try {
+        mostrarCargador("Cargando tesis...");
         const respuesta = await fetch(url);
         const datos = await respuesta.json();
 
@@ -667,6 +745,8 @@
         resultadoAdmin.className = "resultado error";
         resultadoAdmin.innerHTML = "No se pudieron cargar las tesis.";
         herramientasAdmin.classList.add("oculto");
+      } finally {
+        ocultarCargador();
       }
     }
 
@@ -773,6 +853,7 @@
         "&clave_admin=" + encodeURIComponent(claveAdmin);
 
       try {
+        mostrarCargador("Autorizando...");
         const respuesta = await fetch(url);
         const datos = await respuesta.json();
 
@@ -797,6 +878,8 @@
         pintarTrabajos();
       } catch (error) {
         mostrarMensajeTrabajo(id, "error", "No se pudo autorizar.");
+      } finally {
+        ocultarCargador();
       }
     }
 
@@ -820,6 +903,7 @@
         "&clave_admin=" + encodeURIComponent(claveAdmin);
 
       try {
+        mostrarCargador("Guardando...");
         const respuesta = await fetch(url);
         const datos = await respuesta.json();
 
@@ -853,6 +937,8 @@
         pintarTrabajos();
       } catch (error) {
         mostrarMensajeTrabajo(id, "error", "No se pudo actualizar el estado.");
+      } finally {
+        ocultarCargador();
       }
     }
 
