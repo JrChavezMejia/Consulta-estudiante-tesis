@@ -206,6 +206,31 @@
       margin-top: 16px;
     }
 
+    .filtro-estados {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .filtro-chip {
+      width: auto;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid #2f5c7c;
+      background: #06111f;
+      color: #d6e6f2;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .filtro-chip.activo {
+      background: #19d3e6;
+      border-color: #19d3e6;
+      color: #06111f;
+    }
+
     .progreso {
       margin: 18px 0 20px;
       padding: 16px;
@@ -315,8 +340,8 @@
     <p>Seleccione el tipo de acceso para continuar.</p>
 
     <div class="tabs">
-      <button class="tab activo" id="tabEstudiante" onclick="mostrarAcceso('estudiante')">Estudiante</button>
-      <button class="tab" id="tabAdmin" onclick="mostrarAcceso('admin')">Administrador</button>
+      <button type="button" class="tab activo" id="tabEstudiante" onclick="mostrarAcceso('estudiante')">Estudiante</button>
+      <button type="button" class="tab" id="tabAdmin" onclick="mostrarAcceso('admin')">Administrador</button>
     </div>
 
     <div id="panelEstudiante" class="caja">
@@ -332,7 +357,7 @@
       <label for="clave">Clave de acceso</label>
       <input id="clave" type="password" placeholder="Clave recibida por correo" />
 
-      <button onclick="consultarEstado()">Consultar estado</button>
+      <button type="button" onclick="consultarEstado()">Consultar estado</button>
 
       <div id="resultado" class="resultado"></div>
     </div>
@@ -344,22 +369,12 @@
       <label for="adminClave">Clave de administrador</label>
       <input id="adminClave" type="password" placeholder="Clave de administrador" />
 
-      <button class="secundario" onclick="listarTrabajos()">Ingresar y cargar tesis</button>
+      <button type="button" class="secundario" onclick="listarTrabajos()">Ingresar y cargar tesis</button>
 
       <div class="filtros">
         <div>
-          <label for="filtroEstado">Filtrar por estado</label>
-          <select id="filtroEstado" onchange="pintarTrabajos()">
-            <option value="">Todos</option>
-            <option value="Solicitud recibida">Solicitud recibida</option>
-            <option value="En evaluación inicial">En evaluación inicial</option>
-            <option value="Información incompleta">Información incompleta</option>
-            <option value="Aprobada para seguimiento">Aprobada para seguimiento</option>
-            <option value="En revisión">En revisión</option>
-            <option value="Con observaciones">Con observaciones</option>
-            <option value="En espera del estudiante">En espera del estudiante</option>
-            <option value="Finalizado">Finalizado</option>
-          </select>
+          <label>Filtrar por estado</label>
+          <div id="filtroEstadoBotones" class="filtro-estados"></div>
         </div>
 
         <div>
@@ -394,10 +409,35 @@
     };
 
     let trabajosCache = [];
+    let filtroEstadoActual = "";
 
     function normalizarEstado(estado) {
       const limpio = String(estado || "").trim();
       return ESTADO_EQUIVALENTE[limpio] || limpio || "Solicitud recibida";
+    }
+
+    function pintarBotonesEstado() {
+      const contenedor = document.getElementById("filtroEstadoBotones");
+      if (!contenedor) return;
+
+      const opciones = ["Todos"].concat(ESTADOS);
+
+      contenedor.innerHTML = opciones.map(function(nombre) {
+        const valor = nombre === "Todos" ? "" : nombre;
+        const activo = valor === filtroEstadoActual ? " activo" : "";
+
+        return `
+          <button type="button" class="filtro-chip${activo}" onclick="filtrarPorEstado('${valor.replace(/'/g, "\\'")}')">
+            ${nombre}
+          </button>
+        `;
+      }).join("");
+    }
+
+    function filtrarPorEstado(estado) {
+      filtroEstadoActual = estado;
+      pintarBotonesEstado();
+      pintarTrabajos();
     }
 
     function indiceEstado(estado) {
@@ -549,7 +589,7 @@
 
     function pintarTrabajos() {
       const listaTrabajos = document.getElementById("listaTrabajos");
-      const filtroEstado = document.getElementById("filtroEstado").value;
+      const filtroEstado = filtroEstadoActual;
       const filtroTexto = document.getElementById("filtroTexto").value.trim().toLowerCase();
 
       const filtrados = trabajosCache.filter(function(item) {
@@ -609,8 +649,8 @@
             <textarea id="observaciones-${idSeguro}" placeholder="Escriba observaciones para el estudiante">${item.observaciones || ""}</textarea>
 
             <div class="acciones">
-              <button onclick="guardarEstado('${idSeguro}')">Guardar estado</button>
-              <button class="verde" onclick="autorizarTrabajo('${idSeguro}')" ${puedeAutorizar ? "" : "disabled"}>Autorizar acceso</button>
+              <button type="button" onclick="guardarEstado('${idSeguro}')">Guardar estado</button>
+              <button type="button" class="verde" onclick="autorizarTrabajo('${idSeguro}')" ${puedeAutorizar ? "" : "disabled"}>Autorizar acceso</button>
             </div>
 
             ${!puedeAutorizar && !autorizada ? `<p>Para autorizar acceso, primero cambie el estado a <strong>Aprobada para seguimiento</strong>.</p>` : ""}
@@ -684,9 +724,27 @@
           return;
         }
 
+        const indice = trabajosCache.findIndex(function(item) {
+          return String(item.id || "") === String(id || "");
+        });
+
+        if (indice >= 0) {
+          trabajosCache[indice].estado = estado;
+          trabajosCache[indice].observaciones = observaciones;
+          trabajosCache[indice].ultimaActualizacion = new Date().toLocaleString("es-GT");
+          if (notificar === "Si") {
+            trabajosCache[indice].notificado = "Si";
+          }
+        }
+
+        if (filtroEstadoActual && filtroEstadoActual !== estado) {
+          filtroEstadoActual = "";
+          pintarBotonesEstado();
+        }
+
         resultadoAdmin.className = "resultado exito";
         resultadoAdmin.innerHTML = "Estado actualizado correctamente.";
-        listarTrabajos();
+        pintarTrabajos();
       } catch (error) {
         resultadoAdmin.className = "resultado error";
         resultadoAdmin.innerHTML = "No se pudo actualizar el estado.";
@@ -714,6 +772,8 @@
         listarTrabajos();
       }
     });
+
+    pintarBotonesEstado();
   </script>
 </body>
 </html>
