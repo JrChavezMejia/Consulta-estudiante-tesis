@@ -207,28 +207,66 @@
     }
 
     .filtro-estados {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(9, minmax(86px, 1fr));
+      gap: 10px;
       margin-top: 8px;
+      padding: 28px 10px 10px;
+      border: 1px solid #203e5f;
+      border-radius: 8px;
+      background: #06111f;
+      overflow-x: auto;
+    }
+
+    .filtro-estados::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 16px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #19d3e6, #3ddc97);
+      box-shadow: 0 0 12px rgba(25, 211, 230, 0.45);
     }
 
     .filtro-chip {
-      width: auto;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: 1px solid #2f5c7c;
-      background: #06111f;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-width: 86px;
+      padding: 8px 4px 6px;
+      border: 0;
+      background: transparent;
       color: #d6e6f2;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: bold;
       cursor: pointer;
+      line-height: 1.15;
+    }
+
+    .filtro-chip::before {
+      content: "";
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #12314f;
+      border: 2px solid #2f5c7c;
+      box-shadow: 0 0 0 rgba(25, 211, 230, 0);
     }
 
     .filtro-chip.activo {
-      background: #19d3e6;
-      border-color: #19d3e6;
-      color: #06111f;
+      color: #ffffff;
+    }
+
+    .filtro-chip.activo::before {
+      background: #3ddc97;
+      border-color: #3ddc97;
+      box-shadow: 0 0 16px rgba(61, 220, 151, 0.75);
     }
 
     .progreso {
@@ -364,13 +402,13 @@
 
     <div id="panelAdmin" class="caja oculto">
       <h2>Panel de gestión de tesis</h2>
-      <p>Ingrese su clave para cargar los trabajos, revisar su avance, autorizar acceso y actualizar estados.</p>
 
       <label for="adminClave">Clave de administrador</label>
       <input id="adminClave" type="password" placeholder="Clave de administrador" />
 
-      <button type="button" class="secundario" onclick="listarTrabajos()">Ingresar y cargar tesis</button>
+      <button type="button" class="secundario" onclick="listarTrabajos()">Ingresar</button>
 
+      <div id="herramientasAdmin" class="oculto">
       <div class="filtros">
         <div>
           <label>Filtrar por estado</label>
@@ -381,6 +419,7 @@
           <label for="filtroTexto">Buscar</label>
           <input id="filtroTexto" type="text" placeholder="Nombre, correo, título o ID" oninput="pintarTrabajos()" />
         </div>
+      </div>
       </div>
 
       <div id="resultadoAdmin" class="resultado"></div>
@@ -420,7 +459,7 @@
       const contenedor = document.getElementById("filtroEstadoBotones");
       if (!contenedor) return;
 
-      const opciones = ["Todos"].concat(ESTADOS);
+      const opciones = ESTADOS.concat(["Todos"]);
 
       contenedor.innerHTML = opciones.map(function(nombre) {
         const valor = nombre === "Todos" ? "" : nombre;
@@ -549,11 +588,13 @@
       const claveAdmin = document.getElementById("adminClave").value.trim();
       const resultadoAdmin = document.getElementById("resultadoAdmin");
       const listaTrabajos = document.getElementById("listaTrabajos");
+      const herramientasAdmin = document.getElementById("herramientasAdmin");
 
       resultadoAdmin.style.display = "block";
       resultadoAdmin.className = "resultado";
       resultadoAdmin.innerHTML = "Cargando tesis...";
       listaTrabajos.innerHTML = "";
+      herramientasAdmin.classList.add("oculto");
 
       if (!claveAdmin) {
         resultadoAdmin.className = "resultado error";
@@ -573,10 +614,12 @@
         if (!datos.ok) {
           resultadoAdmin.className = "resultado error";
           resultadoAdmin.innerHTML = datos.mensaje || "No se pudieron cargar las tesis.";
+          herramientasAdmin.classList.add("oculto");
           return;
         }
 
         trabajosCache = datos.tesis || datos.pendientes || [];
+        herramientasAdmin.classList.remove("oculto");
         resultadoAdmin.className = "resultado exito";
         resultadoAdmin.innerHTML = "Tesis cargadas: " + trabajosCache.length;
         pintarTrabajos();
@@ -584,6 +627,7 @@
       } catch (error) {
         resultadoAdmin.className = "resultado error";
         resultadoAdmin.innerHTML = "No se pudieron cargar las tesis.";
+        herramientasAdmin.classList.add("oculto");
       }
     }
 
