@@ -475,10 +475,12 @@
     <div id="panelAdmin" class="caja oculto">
       <h2>Panel de gestión de tesis</h2>
 
+      <div id="accesoAdmin">
       <label for="adminClave">Clave de administrador</label>
       <input id="adminClave" type="password" placeholder="Clave de administrador" />
 
       <button type="button" class="secundario" onclick="listarTrabajos()">Ingresar</button>
+      </div>
 
       <div id="herramientasAdmin" class="oculto">
       <div class="busqueda-admin">
@@ -541,6 +543,20 @@
 
       if (cargador) {
         cargador.classList.remove("activo");
+      }
+    }
+
+    function ocultarAccesoAdmin() {
+      const accesoAdmin = document.getElementById("accesoAdmin");
+      const adminClave = document.getElementById("adminClave");
+
+      if (adminClave) {
+        adminClave.value = "";
+      }
+
+      if (accesoAdmin) {
+        accesoAdmin.classList.add("oculto");
+        accesoAdmin.style.display = "none";
       }
     }
 
@@ -702,6 +718,7 @@
       const resultadoAdmin = document.getElementById("resultadoAdmin");
       const listaTrabajos = document.getElementById("listaTrabajos");
       const herramientasAdmin = document.getElementById("herramientasAdmin");
+      const accesoAdmin = document.getElementById("accesoAdmin");
 
       resultadoAdmin.style.display = "block";
       resultadoAdmin.className = "resultado";
@@ -736,6 +753,7 @@
         const activas = trabajosCache.filter(function(item) {
           return normalizarEstado(item.estado) !== "Finalizado";
         }).length;
+        ocultarAccesoAdmin();
         herramientasAdmin.classList.remove("oculto");
         resultadoAdmin.className = "resultado exito";
         resultadoAdmin.innerHTML = "Tesis activas: " + activas;
