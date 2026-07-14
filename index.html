@@ -189,6 +189,31 @@
       color: #19d3e6;
     }
 
+    .docs-box {
+      margin: 14px 0;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid #2f5c7c;
+      background: #06111f;
+    }
+
+    .docs-boton {
+      display: inline-block;
+      padding: 11px 14px;
+      border-radius: 6px;
+      background: #ffd166;
+      color: #1b1300;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .docs-url {
+      margin-top: 10px;
+      color: #8fa6c6;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
     .trabajo {
       margin-top: 18px;
       padding: 18px;
@@ -803,6 +828,7 @@
         const autorizada = String(item.autorizada || "").toLowerCase() === "si";
         const puedeAutorizar = estado === "Aprobada para seguimiento" && !autorizada;
         const mensaje = mensajesTrabajo[String(item.id || "")];
+        const linkDocs = String(item.linkDocs || "").trim();
 
         return `
           <div class="trabajo" id="trabajo-${idSeguro}">
@@ -823,6 +849,13 @@
             <div class="dato"><strong>Nivel:</strong> ${item.nivel || ""}</div>
             <div class="dato"><strong>Servicio:</strong> ${item.tipoServicio || ""}</div>
             <div class="dato"><strong>Título:</strong> ${item.titulo || ""}</div>
+            <div class="docs-box">
+              <strong>Archivo Google Docs:</strong><br>
+              ${linkDocs
+                ? `<a class="docs-boton" href="${linkDocs}" target="_blank" rel="noopener noreferrer">Abrir Google Docs</a><div class="docs-url">${linkDocs}</div>`
+                : `<div class="docs-url">No hay URL registrada para este trabajo.</div>`
+              }
+            </div>
             <div class="dato"><strong>Acceso autorizado:</strong> ${autorizada ? "Sí" : "No"}</div>
 
             <div class="grid-dos">
