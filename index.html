@@ -871,8 +871,8 @@
               <div>
                 <label>Notificar por correo</label>
                 <select id="notificar-${idSeguro}">
+                  <option value="Si" selected>Sí</option>
                   <option value="No">No</option>
-                  <option value="Si">Sí</option>
                 </select>
               </div>
             </div>
@@ -968,7 +968,7 @@
       const claveAdmin = claveAdminSesion || document.getElementById("adminClave").value.trim();
       const estado = document.getElementById("estado-" + id).value;
       const observaciones = document.getElementById("observaciones-" + id).value.trim();
-      const notificar = document.getElementById("notificar-" + id).value;
+      const notificar = "Si";
       const resultadoAdmin = document.getElementById("resultadoAdmin");
 
       resultadoAdmin.style.display = "none";
