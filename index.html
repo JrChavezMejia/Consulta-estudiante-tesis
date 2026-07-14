@@ -261,7 +261,7 @@
 
     .acciones {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 12px;
       margin-top: 4px;
     }
@@ -861,7 +861,7 @@
             <div class="grid-dos">
               <div>
                 <label>Nuevo estado</label>
-                <select id="estado-${idSeguro}">
+                <select id="estado-${idSeguro}" onchange="actualizarBotonAutorizar('${idSeguro}')">
                   ${ESTADOS.map(function(nombre) {
                     return `<option value="${nombre}" ${nombre === estado ? "selected" : ""}>${nombre}</option>`;
                   }).join("")}
@@ -882,13 +882,40 @@
 
             <div class="acciones">
               <button type="button" onclick="guardarEstado('${idSeguro}')">Guardar estado</button>
-              <button type="button" class="verde" onclick="autorizarTrabajo('${idSeguro}')" ${puedeAutorizar ? "" : "disabled"}>Autorizar acceso</button>
+              <button type="button" class="verde" id="autorizar-${idSeguro}" onclick="autorizarTrabajo('${idSeguro}')" ${puedeAutorizar ? "" : "disabled"}>Autorizar acceso</button>
+              <button type="button" class="discreto" onclick="enviarAPapelera('${idSeguro}')">Enviar a papelera</button>
             </div>
 
             ${!puedeAutorizar && !autorizada ? `<p>Para autorizar acceso, primero cambie el estado a <strong>Aprobada para seguimiento</strong>.</p>` : ""}
           </div>
         `;
       }).join("");
+    }
+
+    function actualizarBotonAutorizar(id) {
+      const estado = document.getElementById("estado-" + id).value;
+      const boton = document.getElementById("autorizar-" + id);
+      const trabajo = trabajosCache.find(function(item) {
+        return String(item.id || "") === String(id || "");
+      });
+      const autorizada = trabajo && String(trabajo.autorizada || "").toLowerCase() === "si";
+
+      if (!boton) return;
+
+      boton.disabled = !(estado === "Aprobada para seguimiento" && !autorizada);
+    }
+
+    function enviarAPapelera(id) {
+      const estado = document.getElementById("estado-" + id);
+
+      if (!estado) return;
+
+      if (!confirm("¿Enviar esta tesis a Papelera / Finalizados?")) {
+        return;
+      }
+
+      estado.value = "Finalizado";
+      guardarEstado(id);
     }
 
     async function autorizarTrabajo(id) {
