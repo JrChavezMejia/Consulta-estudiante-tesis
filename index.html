@@ -524,6 +524,7 @@
     let trabajosCache = [];
     let filtroEstadoActual = "";
     let mensajesTrabajo = {};
+    let claveAdminSesion = "";
 
     function mostrarCargador(texto) {
       const cargador = document.getElementById("cargadorGlobal");
@@ -732,6 +733,8 @@
         return;
       }
 
+      claveAdminSesion = claveAdmin;
+
       const url = SCRIPT_URL +
         "?action=listar_tesis" +
         "&admin=" + encodeURIComponent(claveAdmin) +
@@ -856,7 +859,7 @@
     }
 
     async function autorizarTrabajo(id) {
-      const claveAdmin = document.getElementById("adminClave").value.trim();
+      const claveAdmin = claveAdminSesion || document.getElementById("adminClave").value.trim();
       const resultadoAdmin = document.getElementById("resultadoAdmin");
 
       if (!confirm("¿Autorizar acceso del estudiante a esta tesis?")) return;
@@ -902,7 +905,7 @@
     }
 
     async function guardarEstado(id) {
-      const claveAdmin = document.getElementById("adminClave").value.trim();
+      const claveAdmin = claveAdminSesion || document.getElementById("adminClave").value.trim();
       const estado = document.getElementById("estado-" + id).value;
       const observaciones = document.getElementById("observaciones-" + id).value.trim();
       const notificar = document.getElementById("notificar-" + id).value;
