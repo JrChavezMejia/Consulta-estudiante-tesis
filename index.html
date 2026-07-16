@@ -141,13 +141,31 @@
       box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
     }
 
-    .cargador-asterisco {
-      display: block;
+    .cargador-engranajes {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
       color: #19d3e6;
-      font-size: 66px;
       line-height: 1;
       text-shadow: 0 0 24px rgba(25, 211, 230, 0.8);
-      animation: girarAsterisco 1.05s linear infinite;
+    }
+
+    .engranaje {
+      display: inline-block;
+      font-size: 42px;
+      animation: girarEngranaje 1.25s linear infinite;
+    }
+
+    .engranaje:nth-child(2) {
+      font-size: 56px;
+      color: #3ddc97;
+      animation-duration: 1s;
+      animation-direction: reverse;
+    }
+
+    .engranaje:nth-child(3) {
+      animation-duration: 1.45s;
     }
 
     .cargador-texto {
@@ -156,10 +174,9 @@
       font-weight: bold;
     }
 
-    @keyframes girarAsterisco {
-      from { transform: rotate(0deg) scale(1); }
-      50% { transform: rotate(180deg) scale(1.12); }
-      to { transform: rotate(360deg) scale(1); }
+    @keyframes girarEngranaje {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     .resultado {
@@ -283,6 +300,15 @@
 
     .mensaje-trabajo {
       margin: 14px 0;
+    }
+
+    #herramientasAdmin {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 14px 0 16px;
+      background: #0d1f36;
+      border-bottom: 1px solid #203e5f;
     }
 
     .filtro-estados {
@@ -465,7 +491,11 @@
 <body>
   <div id="cargadorGlobal" class="cargador-global">
     <div class="cargador-caja">
-      <span class="cargador-asterisco">*</span>
+      <div class="cargador-engranajes">
+        <span class="engranaje">⚙</span>
+        <span class="engranaje">⚙</span>
+        <span class="engranaje">⚙</span>
+      </div>
       <div id="cargadorTexto" class="cargador-texto">Cargando...</div>
     </div>
   </div>
@@ -1034,7 +1064,7 @@
         return;
       }
 
-      if (["idConsulta", "correoConsulta", "claveConsulta"].indexOf(elemento.id) !== -1) {
+      if (["id", "correo", "clave"].indexOf(elemento.id) !== -1) {
         event.preventDefault();
         consultarEstado();
       }
